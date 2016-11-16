@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 /* 
  * File:   Player.h
@@ -23,6 +18,7 @@ using namespace std;
 struct Move {
     int x,y;
     int player;
+    string answer;
 };
 
 class Player {

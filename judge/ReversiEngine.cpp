@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 /* 
  * File:   ReversiEngine.cpp
@@ -22,8 +17,7 @@ struct Dir {
 } dir[8] = {{1,1},{1,0},{0,1},{1,-1},{-1,-1},{-1,0},{0,-1},{-1,1}};
 
 
-ReversiEngine::ReversiEngine(int nn,
-            int firsrtStep) {
+ReversiEngine::ReversiEngine(int nn, int firsrtStep) {
     
     firsrtPlayer = firsrtStep;
     N = nn;

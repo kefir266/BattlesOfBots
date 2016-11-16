@@ -11,6 +11,8 @@
  * Created on July 11, 2016, 5:05 PM
  */
 
+
+
 #include<iostream>
 #include<string>
 #include <cstdlib>
@@ -18,11 +20,14 @@
 #include<stdio.h>
 #include<cstring>
 
-#include "ReversiEngine.h"
+//#include "ReversiEngine.h"
+#include "ChainReactionEngine.h"
+#include "ChainReactionPipeComunicator.h"
 
 //#include "GomokuEngine.h"
 
-#define N 10
+//#define N 10
+#define N 5
 
 using namespace std;
 
@@ -33,7 +38,8 @@ int main(int argc, char** argv) {
 
     
     //GomokuEngine *gomoku = new GomokuEngine(N,1);
-    ReversiEngine *game = new ReversiEngine(N, 1);
+    //ReversiEngine *game = new ReversiEngine(N, 1);
+	ChainReactionEngine game(N, 1);
     
 	char *prg_player1, *prg_player2;
 	if (argc == 2) {
@@ -46,15 +52,16 @@ int main(int argc, char** argv) {
 		}
 	else return 1;
         
-        game->init(prg_player1,prg_player2);
+        game.init(prg_player1,prg_player2);
         
     cout << "Start game"<<endl;
     
-    pipeCommunicator *com = new pipeCommunicator();
 
-    game->start(com);
+    //pipeCommunicator *com = new pipeCommunicator();
+    ChainReactionPipeComunicator com;
+
+    game.start(com);
 	
-    
     return 0;
 }
 

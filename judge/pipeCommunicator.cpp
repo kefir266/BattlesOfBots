@@ -16,8 +16,8 @@
 
 pipeCommunicator::pipeCommunicator() {
     
-    wnd = initscr();
-    fs.open("move.dat");
+	this->stepsLog.clear();
+	wnd = initscr();
 }
 
 pipeCommunicator::pipeCommunicator(const pipeCommunicator& orig) {
@@ -45,35 +45,28 @@ void pipeCommunicator::sendPlacement(int** mas, Player *player, int step){
         }
         fs <<endl;
         
-        //cout<<endl;   
     }
     
     
     fs << player->getNumber()<<endl;
     fs.close();
     
-    //cout <<  player->getNumber()<<endl<<endl;
     move(10,0);
     printw("%d %d", player->getNumber(),step);
     refresh();
     
 	string scmd = "cat move.dat | " +  player->getCommand();
 	
-	//cout << scmd <<endl;
 	fd = popen(scmd.c_str() ,"re");
                 
 	if (!fd) exit(1);
 }
 
-void pipeCommunicator::getAnswer(Move *move){
+void pipeCommunicator::getAnswer(Move *mv){
 
     
-    int movx,movy;
-    
-    fscanf(fd,"%d %d", &movy, &movx);
-    move->x = movx;
-    move->y = movy;
-    
+    fscanf(fd,"%d %d %s", &mv->x, &mv->y , &mv->answer);
+    stepsLog.insert(stepsLog.key_comp(),mv->answer);
     pclose(fd);
     
 }

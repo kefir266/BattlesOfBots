@@ -17,6 +17,7 @@
 #include<stdio.h>
 #include<curses.h>
 #include<unistd.h>
+#include<map>
 
 #include "Player.h"
 
@@ -27,16 +28,24 @@ using namespace std;
 
 class pipeCommunicator {
 public:
+    
+    map<int,string> stepsLog;
+    
     pipeCommunicator();
     pipeCommunicator(const pipeCommunicator& orig);
     virtual ~pipeCommunicator();
     
-    void sendPlacement(int** mas, Player *player,int step);
+    virtual void sendPlacement(int** mas, Player *player,int step);
     void getAnswer(Move *move);
     
-private:
+protected:
     ofstream fs;
-    FILE *fd; 
+    FILE *fd;
+    
+    
+private:
+    
+     
     WINDOW *wnd;
     
 };
