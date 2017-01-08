@@ -1,9 +1,6 @@
 // Game of the Amazons.cpp : Defines the entry point for the console application.
 //
 
-#include "stdafx.h"
-// Gomoku.cpp : Defines the entry point for the console application.
-//
 
 
 #include <iostream>
