@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"time"
+	//"time"
+	"container/list"
 )
 
 //func ABS(a int) int {
@@ -10,7 +11,7 @@ import (
 //}
 var N = 10
 var ch chan int
-var starttime int64
+//var starttime int64
 var counter int
 type Dir struct {
 	y,x int
@@ -19,7 +20,7 @@ type Dir struct {
 var dir []Dir
 
 type Field struct {
-	mas       [][]int
+	mas       [10][10]int
 	myPlayer  int
 	firstMove *Move
 	bestMove  *Move
@@ -28,6 +29,8 @@ type Field struct {
 		x,y int
 	}
 }
+
+var listFields *list.List
 
 type Move struct {
 	x, y     int
@@ -43,10 +46,16 @@ func (move *Move) add( nextLink *Move) {
 }
 
 func (field *Field) init() {
-	field.mas = make([]([]int), N)
-	for i := range field.mas {
-		field.mas[i] = make([]int,N)
+	//field.mas = make([]([]int), N)
+	//for i := range field.mas {
+	//	field.mas[i] = make([]int,N)
+	//}
+	for y := 0 ; y < N ; y++ {
+		for x := 0 ; x < N ; x++ {
+			field.mas[y][x] = 0
+		}
 	}
+	field.firstMove = nil
 }
 
 func (field *Field) scan() error {
@@ -68,12 +77,13 @@ func (field *Field) scan() error {
 	return err
 }
 
-func (field *Field) findAmazonArrow(py, px, y, x, player, nAmazon int) {
-	var cx, cy int
+func (field *Field) findAmazonArrow(py, px, y, x, player, nAmazon int) int {
+	var cx, cy , num int
 	for _,d := range dir {
 		cx = x + d.x
 		cy = y + d.y
 		for ; (cx < N && cy < N && cx >= 0 && cy >= 0 && field.mas[cy][cx] == 0) ; {
+			num++
 			if field.firstMove == nil {
 				field.firstMove = &Move{x: px, y: py, ax: x, ay: y, rx: cx, ry: cy, nAmazon: nAmazon}
 				field.lastMove = field.firstMove
@@ -86,7 +96,7 @@ func (field *Field) findAmazonArrow(py, px, y, x, player, nAmazon int) {
 			cx += d.x
 		}
 	}
-
+	return num
 }
 
 func (field *Field) findAmazonMoves(y, x, player, nAmazon int) int {
@@ -99,8 +109,7 @@ func (field *Field) findAmazonMoves(y, x, player, nAmazon int) int {
 		cy = y + d.y
 		for ; (cx < N && cy < N && cx >= 0 && cy >= 0 && field.mas[cy][cx] == 0) ; {
 
-			num++
-			field.findAmazonArrow(y, x, cy, cx, player, nAmazon)
+			num +=	field.findAmazonArrow(y, x, cy, cx, player, nAmazon)
 			cy += d.y
 			cx += d.x
 		}
@@ -109,11 +118,23 @@ func (field *Field) findAmazonMoves(y, x, player, nAmazon int) int {
 	return num
 }
 
-func (field *Field) copy() Field  {
-	var newField Field = Field{}
+func (field *Field) copy() *Field  {
+
+	var newField *Field
+	type dataList interface {
+		data() *Field
+	}
+
+	if (listFields.Len()  == 0) {
+		newField = &Field{}
+		newField.init()
+	} else {
+		var ee = listFields.Remove(listFields.Front())
+		newField = ee.(*Field)
+	}
 	var y,x int
 
-	newField.init()
+
 
 	for y = 0 ; y < N ; y++ {
 		for x = 0 ;x < N ; x++ {
@@ -153,16 +174,16 @@ func (field *Field) nextStep(recur, player int, move *Move) int  {
 func (field *Field) passMoves(recur, player int, ch chan int) int {
 
 	counter++
-	if (recur > 2 || (counter > 10000000)) {
-		if recur == 1 {
-			ch <- 0
-			close(ch)
-		}
+	if (recur > 3 || (counter > 1000000)) {
+		//if recur == 1 {
+		//	ch <- 0
+		//	close(ch)
+		//}
 		return 0
 	}
 
 	var currentMove *Move = field.firstMove
-	var nextField Field
+	var nextField *Field
 	nextField = field.copy()
 	nextField.myPlayer = player
 
@@ -173,49 +194,66 @@ func (field *Field) passMoves(recur, player int, ch chan int) int {
 		currentCost = nextField.nextStep(recur, player, currentMove)
 		if currentCost > bestCost {
 			bestCost = currentCost
+			field.bestMove = currentMove
 		}
 		currentMove = currentMove.nextLink
 	}
-	if recur == 1 {
-		ch <- bestCost
-		close(ch)
-	}
+	//if recur == 1 {
+	//	ch <- bestCost
+	//	close(ch)
+	//}
 
-
+	listFields.PushBack(nextField)
 	return bestCost
 }
 
 func (field *Field) calcMoves(recur,player int) int {
 	var num int = 0
 
-	var chn int = 0
+	//var chn int = 0
 	var i int = 0;
 	for ; i < 4 ; i++ {
-
-		num += field.findAmazonMoves(field.amazons[player - 1][i].y, field.amazons[player - 1][i].x, player, i)
-				if recur == 0 {
-					chn++
-					go field.passMoves(recur+1, 3 - player, ch)
-				} else {
-					num -= field.passMoves(recur+1, 3 - player, nil)
-
-				}
-
-
-	}
-
-	if recur == 0 {
-		for i := range ch {
-			num -= i;
-			//chn--
-			if (chn == 0) {
-				break
-			}
+		if recur > 0 {
+			num = field.findAmazonMoves(field.amazons[player - 1][i].y, field.amazons[player - 1][i].x, player, i)
+		} else {
+			field.findAmazonMoves(field.amazons[player - 1][i].y, field.amazons[player - 1][i].x, player, i)
 		}
-	} else if recur == 1 {
-//		ch <- num
+				//if recur == 0 {
+				//	chn++
+				//	go field.passMoves(recur+1, 3 - player, ch)
+				//} else {
+					num -= field.passMoves(recur+1, 3 - player, nil)*2
+
+				//}
+
 
 	}
+	var currentMove *Move = field.firstMove
+	if recur > 0 {
+		var delMove *Move
+
+		for ; currentMove != nil; {
+
+			delMove = currentMove
+			currentMove = currentMove.nextLink
+			delMove.nextLink = nil
+			delMove = nil
+		}
+		currentMove = nil
+		field.lastMove = field.firstMove
+	}
+//	if recur == 0 {
+//		for i := range ch {
+//			num -= i;
+//			//chn--
+//			if (chn == 0) {
+//				break
+//			}
+//		}
+//	} else if recur == 1 {
+////		ch <- num
+//
+//	}
 
 	return num
 }
@@ -250,22 +288,19 @@ var field = Field{}
 
 	ch = make(chan int, (N * N))
 
-	field.init()
 	field.scan()
 
-	starttime = time.Now().UnixNano();
+//	starttime = time.Now().UnixNano();
 	counter = 0
-
+	listFields = list.New()
 
 	field.nextMove(0,field.myPlayer)
 
-	endtime := time.Now().UnixNano()
+//	endtime := time.Now().UnixNano()
 
 	fmt.Println(field.bestMove.y, field.bestMove.x)
 	fmt.Println(field.bestMove.ay, field.bestMove.ax)
 	fmt.Println(field.bestMove.ry, field.bestMove.rx)
 
-	fmt.Println((endtime - starttime))
 	fmt.Println(field.bestMove.cost)
-	fmt.Println(counter)
 }
