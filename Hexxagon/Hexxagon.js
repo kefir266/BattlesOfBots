@@ -24,9 +24,11 @@ process.stdin.on("end", function () {
     main();
 });
 
-var dir = [[-1,-1],[-1,+0], [-1, 1],
+var dir = [[-1,-1],[-1,+0], [-1, +1],
     [+0, -1], [+0, 1],
-    [1, -1], [1, +0], [1, 1]];
+    [+1, -1], [+1, +0], [+1, +1]];
+var dirJump = [[-1,-2],[-2,+0], [-1, 2],
+    [+1, -2], [-2, +0], [+1, 2]];
 
 var Moves = function(player){
     this.x = +0;
@@ -135,7 +137,7 @@ Field.prototype.nextStep = function(m){
         m.cost = this.comparable() * 1000;
         return 0;
     }
-    if ( counter > 1000000 || this.recur > 3) {
+    if ( counter > 100000000 || this.recur > 3) {
         m.cost = this.comparable();
         return 0;
     }
@@ -183,9 +185,9 @@ Field.prototype.findMoves = function(m){
     }
 
     //jumps
-    for (i = 0; i < 7 ; i++){
-        dy = dir[i][0]+dir[i][0] + m.py;
-        dx = dir[i][1]+dir[i][1] + m.px;
+    for (i = 0; i < 5 ; i++){
+        dy = dirJump[i][0] + m.py;
+        dx = dirJump[i][1] + m.px;
         if (dy < NY && dx < NX && dy >= 0 && dx >= 0 && this.mas[dy][dx] === 0){
 
             m.x = dx;
