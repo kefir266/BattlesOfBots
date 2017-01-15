@@ -1,29 +1,47 @@
 /**
  * Created by dmitrij on 11.01.2017.
  */
+
+///////////////////////////////////////FOR THE CONSOLE///////////
 process.stdin.resume();
 process.stdin.setEncoding("utf-8");
-var input_stdin_array =[];
-var input_currentline = 0;
-
-var NY = 6;
-var NX = 7;
-var counter = 0;
-
 
 process.stdin.on("data", function (input) {
     input_stdin_array[input_currentline++] = input;
-
     if (input_currentline === 8){
         main();
     }
 });
 
 process.stdin.on("end", function () {
-    process.stdout.write('The End');
+    process.stdout.write('The End\n');
     main();
 });
+var input_currentline = 0;
 
+
+///////////////////for the judgement system///////////////////
+// process.stdin.resume();
+// process.stdin.setEncoding("utf-8");
+// var stdin_input = "";
+// //process.stdout.write('Test');
+//
+// process.stdin.on("data", function (input) {
+//     console.log(input);
+//     stdin_input += input;
+// });
+//
+// process.stdin.on("end", function () {
+//     input_stdin_array = stdin_input.split('\n');
+//     process.stdout.write('Start');
+//     main();
+// });
+///////////////////////////////////////////////////////////////
+
+var input_stdin_array =[];
+var NY = 6;
+var NX = 7;
+var counter = 0;
 var dir = [[-1,-1],[-1,+0], [-1, +1],
     [+0, -1], [+0, 1],
     [+1, -1], [+1, +0], [+1, +1]];
@@ -137,7 +155,7 @@ Field.prototype.nextStep = function(m){
         m.cost = this.comparable() * 1000;
         return 0;
     }
-    if ( counter > 100000000 || this.recur > 3) {
+    if ( counter > 10000 || this.recur > 1) {
         m.cost = this.comparable();
         return 0;
     }
