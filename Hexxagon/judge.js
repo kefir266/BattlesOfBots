@@ -12,7 +12,7 @@ var Readable = require('stream').Readable,
 
 var spawn = require('child_process').spawn,
     p = spawn('node', ['Hexxagon.js'], {
-        stdio: ['pipe', 'pipe', null]
+        stdio: ['pipe', 'pipe', 'pipe']
     });
 
 
@@ -37,8 +37,12 @@ p.unref();
 setTimeout(function () {
     console.log('Game over! ');
     p.kill();
+    setTimeout(function () {
+        console.log('Game over2! ');
+    }, 10000)
 }, 5000);
 
 function readAnswer(data) {
 
+    console.log('' + data);
 }

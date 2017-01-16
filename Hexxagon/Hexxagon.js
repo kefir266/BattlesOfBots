@@ -3,39 +3,41 @@
  */
 
 ///////////////////////////////////////FOR THE CONSOLE///////////
-process.stdin.resume();
-process.stdin.setEncoding("utf-8");
-
-process.stdin.on("data", function (input) {
-    input_stdin_array[input_currentline++] = input;
-    if (input_currentline === 8){
-        main();
-    }
-});
-
-process.stdin.on("end", function () {
-    process.stdout.write('The End\n');
-    main();
-});
-var input_currentline = 0;
-
-
-///////////////////for the judgement system///////////////////
 // process.stdin.resume();
 // process.stdin.setEncoding("utf-8");
-// var stdin_input = "";
-// //process.stdout.write('Test');
-//
+// //console.log('Hexxagon started');
 // process.stdin.on("data", function (input) {
-//     console.log(input);
-//     stdin_input += input;
+//     input_stdin_array[input_currentline++] = input;
+//     if (input_currentline === 8){
+//         console.log('Stdin ended');
+//         main();
+//     }
 // });
 //
 // process.stdin.on("end", function () {
-//     input_stdin_array = stdin_input.split('\n');
-//     process.stdout.write('Start');
-//     main();
+//     //process.stdout.write('The End\n');
+//     console.log(input_stdin_array);
+//     //main();
 // });
+// var input_currentline = 0;
+
+
+///////////////////for the judgement system///////////////////
+process.stdin.resume();
+process.stdin.setEncoding("utf-8");
+var stdin_input = "";
+//process.stdout.write('Test');
+
+process.stdin.on("data", function (input) {
+    //console.log(input);
+    stdin_input += input;
+});
+
+process.stdin.on("end", function () {
+    input_stdin_array = stdin_input.split('\n');
+    //process.stdout.write('Start');
+    main();
+});
 ///////////////////////////////////////////////////////////////
 
 var input_stdin_array =[];
@@ -61,7 +63,7 @@ var Moves = function(player){
 var Field = function () {
     this.myPlayer = +0;
     this.mas = [];
-    this.nMuves = +0;
+    this.nMoves = +0;
     this.maxCost = -1000;
     this.bestMove = null;
     //this.moves = [];
@@ -100,7 +102,7 @@ Field.prototype.clone = function(){
     }
     //newField.mas = Object.assign([],this.mas);
     newField.myPlayer = 3 - this.myPlayer;
-    newField.nMuves = this.nMoves + 1;
+    newField.nMoves = this.nMoves + 1;
     newField.maxCost = 0;
     newField.bestMove = new Moves(newField.myPlayer);
     //newField.moves = [];
@@ -155,7 +157,7 @@ Field.prototype.nextStep = function(m){
         m.cost = this.comparable() * 1000;
         return 0;
     }
-    if ( counter > 10000 || this.recur > 1) {
+    if ( counter > 2000000 || this.recur > 4) {
         m.cost = this.comparable();
         return 0;
     }
@@ -248,12 +250,16 @@ Field.prototype.calculateMoves = function(){
 
 
 function main() {
+    //console.log('START');
     var field = new Field();
     field.scan();
     field.calculateMoves();
 
     process.stdout.write(field.bestMove.py + ' ' + field.bestMove.px + '\n');
     process.stdout.write(field.bestMove.y + ' ' + field.bestMove.x + '\n');
-    process.stdout.write(field.bestMove.cost +'\n');
+    // process.stdout.write(field.bestMove.cost +'\n');
+    // process.stdout.write('0 0\n');
+    // process.stdout.write('0 1\n');
+    //console.log('OUTPUT');
     process.exit();
 }
