@@ -157,7 +157,7 @@ Field.prototype.nextStep = function(m){
         m.cost = this.comparable() * 1000;
         return 0;
     }
-    if ( counter > 2000000 || this.recur > 4) {
+    if ( counter > 2000000 || this.recur > 1) {
         m.cost = this.comparable();
         return 0;
     }
