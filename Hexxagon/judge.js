@@ -11,7 +11,6 @@ var sim = true;
 
 streamIn._read = function () {
     if (data.length > 0) {
-        console.log(data[0]);
         streamIn.push(data.shift() + '\n');
     } else {
         streamIn.push(null);
@@ -100,7 +99,7 @@ Move.prototype.scan = function (field) {
     this.y = +mxy[0];
     this.x = +mxy[1];
     this.isJump = (Math.abs(this.px - this.x) === 2);
-    console.log(this);
+    console.log(JSON.stringify(this));
     this.pass(field);
     ansverPull = [];
 };
@@ -112,6 +111,9 @@ Move.prototype.pass = function (field) {
     }
     field.mas[this.y][this.x] = this.player;
     field.injectField(this);
+
+    process.stdout.write(JSON.stringify({field: field.mas})+'\n');
+
     field.nMoves++;
     field.myPlayer = 3 - field.myPlayer;
     currentMove.player = field.myPlayer;
@@ -144,7 +146,6 @@ Move.prototype.pass = function (field) {
     var streamIn = new Readable();
     streamIn._read = function () {
         if (data.length > 0) {
-            console.log(data[0]);
             streamIn.push(data.shift() + '\n');
         } else {
             streamIn.push(null);

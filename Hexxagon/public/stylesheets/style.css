@@ -6,3 +6,31 @@ body {
 a {
   color: #00B7FF;
 }
+
+div#field{
+    border: 5px groove #00B7FF;
+    padding:5px;
+    width: 415px;
+    height: 440px;
+    background-color: dimgrey;
+}
+
+div.row-field {
+    height: 70px;
+}
+
+.check-1, .check-2, .check-0 {
+    display: inline;
+
+}
+
+
+.even {
+    position: relative;
+    top:35px;
+    transform: scale(1.2,1.2);
+}
+.odd {
+    position: relative;
+    transform: scale(1.2,1.2);
+}

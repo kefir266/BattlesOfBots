@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hexxagon</title>
+    <link href="public/stylesheets/style.css" rel="stylesheet" type="text/css">
+    <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+    <script src="/public/js/jquery-1.7.1.min.js"></script>
+    <script>
+
+    var socket = io();
+
+    function start() {
+        socket.emit('data', {reason: 'start'});
+        socket.on('field', function (data) {
+
+            var divField = '',
+                player = 0,
+                img = '';
+            for (y = 0 ; y < 6 ; y++ ) {
+                divField += '<div class="row-field">';
+                for (x = 0; x < 7 ; x++) {
+                    player = data.field[y][x];
+                    switch (player) {
+                        case 0: img = 'HEX-white.png';
+                        break;
+                        case 1:
+                            img = 'HEX-blue.png';
+                            break;
+                        case 2:
+                            img = 'HEX-red.png';
+                    }
+
+                    divField += '<div class ="check-'+ player +'">'
+                        +'<img src="/public/img/'+img + '" class="'
+                        + (((x % 2) === 0) ? ' odd' : ' even')
+                        +'"></div>';
+                }
+                divField += '</div>';
+            }
+            $("#field").html(divField);
+        });
+
+        socket.on('move', function () {
+
+        });
+    };
+
+</script>
+</head>
+<body>
+<h1>Hexxagon</h1>
+<div id="field"></div>
+<button onclick="start()">START</button>
+</body>
+
+</html>
