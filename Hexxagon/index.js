@@ -31,10 +31,18 @@ var Judge = require('./judge.js');
 var judge = new Judge();
 
 function passField(field) {
-    json = {field: field.mas};
+    json = {
+        field: (field) ? field.mas : null,
+        winner: judge.winner,
+        gameOver: judge.gameOver
+    };
     console.log(json);
     console.log(judge.ready);
     io.emit('field', json);
+    json = {
+        move: judge.currentMove
+    };
+    io.emit('move', json);
 
 }
 
@@ -51,7 +59,10 @@ io.sockets.on('connection', function (socket) {
             judge.start();
             console.log("start");
 
-            json = {field: judge.field.mas};
+            json = {
+                field: judge.field.mas,
+                winner: judge.winner
+            };
             io.emit('field', json);
 
         }

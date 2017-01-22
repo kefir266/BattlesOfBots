@@ -9,65 +9,96 @@
     <script>
 
     var socket = io();
+    var runningMode = false;
+
+    socket.on('field', outputField );
+    socket.on('move', outputMove );
+
+    function lockButtons(value) {
+        $("#next-button").attr("disabled", value);
+        $("#prev-button").attr("disabled", value);
+        $("#run-button").attr("disabled", value && !runningMode);
+    }
+
+    function outputWinner(winner) {
+        $("h1.winner").html("WINNER " + winner);
+    }
+
+    function outputMove(move) {
+        var m = move.move;
+        tag = "<p><b>"+m.nMove+"  </b>"+ m.py+" " +m.px+" - " + m.y+" " + m.x +"</p>";
+        $("div.moves").append(tag);
+    }
+    function clearMoves() {
+        $("div.moves").html("");
+        $("h1.winner").html("");
+    }
 
     function outputField(data) {
         {
+            if (data.field) {
+                var divField = '',
+                    player = 0,
+                    img = '';
+                for (y = 0; y < 6; y++) {
+                    divField += '<div class="row-field">';
+                    for (x = 0; x < 7; x++) {
+                        player = data.field[y][x];
+                        switch (player) {
+                            case 0:
+                                img = 'HEX-white.png';
+                                break;
+                            case 1:
+                                img = 'HEX-blue.png';
+                                break;
+                            case 2:
+                                img = 'HEX-red.png';
+                        }
 
-            var divField = '',
-                player = 0,
-                img = '';
-            for (y = 0 ; y < 6 ; y++ ) {
-                divField += '<div class="row-field">';
-                for (x = 0; x < 7 ; x++) {
-                    player = data.field[y][x];
-                    switch (player) {
-                        case 0: img = 'HEX-white.png';
-                            break;
-                        case 1:
-                            img = 'HEX-blue.png';
-                            break;
-                        case 2:
-                            img = 'HEX-red.png';
+                        divField += '<div class ="check-' + player + '">'
+                            + '<img src="/public/img/' + img + '" class="'
+                            + (((x % 2) === 0) ? ' odd' : ' even')
+                            + '"></div>';
                     }
-
-                    divField += '<div class ="check-'+ player +'">'
-                        +'<img src="/public/img/'+img + '" class="'
-                        + (((x % 2) === 0) ? ' odd' : ' even')
-                        +'"></div>';
+                    divField += '</div>';
                 }
-                divField += '</div>';
+                $("#field").html(divField);
             }
-            $("#field").html(divField);
-            $("#next-button").attr("disabled",false);
-            $("#prev-button").attr("disabled",false);
+            if (! data.gameOver) {
+                if (runningMode) {
+                    next();
+                } else {
+
+                    lockButtons(false);
+                }
+            } else {
+                runningMode = false;
+                lockButtons(true);
+                if (data.winner === 0) {
+                    outputWinner("DRAW");
+                } else {
+                    outputWinner("WINNER " +data.winner);
+                }
+            }
         }
     }
-
 
     function next() {
         console.log('NEXT client');
         socket.emit('data', {reason: 'next'});
-        socket.on('field', outputField );
-
-        socket.on('move', function () {
-
-        });
-        $("#next-button").attr("disabled",true);
-        $("#prev-button").attr("disabled",true);
+        lockButtons(true);
     };
 
     function start() {
         socket.emit('data', {reason: 'start'});
-        socket.on('field', outputField );
-
-        socket.on('move', function () {
-
-        });
-        $("#next-button").attr("disabled",false);
+        clearMoves();
+        lockButtons(false);
     };
 
     function run() {
-
+        runningMode = ! runningMode;
+        lockButtons(runningMode);
+        socket.emit('data', {reason: 'next'});
     }
 
     function prev() {
@@ -78,11 +109,19 @@
 </head>
 <body>
 <h1>Hexxagon</h1>
-<div id="field"></div>
-<button onclick="start()">START</button>
-<button id="prev-button" onclick="prev()" disabled="true">&lt;PREV</button>
-<button id="run-button" onclick="run()" disabled="true">RUN</button>
-<button id="next-button" onclick="next()" disabled="true">NEXT&gt;</button>
+<div class="block-game">
+    <div class="column-field">
+        <div id="field">Press start</div>
+        <button onclick="start()">START</button>
+        <button id="prev-button" onclick="prev()" disabled="true">&lt;PREV</button>
+        <button id="run-button" onclick="run()" disabled="true">RUN</button>
+        <button id="next-button" onclick="next()" disabled="true">NEXT&gt;</button>
+    </div>
+    <div class="column-moves">
+        <h1 class="winner"></h1>
+        <div class="moves"></div>
+    </div>
+</div>
 </body>
 
 </html>

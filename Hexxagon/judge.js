@@ -60,6 +60,8 @@ function Judge() {
     this.moves = {};
     judge = this;
     this.ready = true;
+    this.winner = 0;
+    this.gameOver = false;
 };
 
 Judge.prototype.isReady = function () {
@@ -105,9 +107,22 @@ Judge.prototype.passToBot = function () {
 };
 
 Judge.prototype.start = function (p1, p2, startField) {
+
+    this.ansver = '';
+    this.ansverPull = [];
+    this.data = fs.readFileSync('./start_field').toString().split('\n');
+    this.numMoves = 0;
+    this.field = new Field(this);
+    this.currentMove = new Move();
+    this.moves = {};
+    this.ready = true;
+    this.winner = 0;
+    this.gameOver = false;
+
     this.field.scan();
     this.currentMove.player = this.field.myPlayer;
     this.currentMove.nMove = 1;
+    this.moves ={};
 };
 
 //////////////////////////////////////////
@@ -189,14 +204,94 @@ Judge.prototype.pullField = function (field, move) {
     this.currentMove.player = this.field.myPlayer;
     this.ready = true;
 
+    this.hasMoves(this.currentMove.player);
+
     console.log('callback');
     callback(this.field);
 };
 
-Judge.prototype.hasMoves = function () {
-    return (this.numMoves < 100);
+Field.prototype.findMoves = function (y, x) {
+    let dir, dirJump, dx, dy;
+    if ((x % 2) == 0) {
+        dir = dirEven;
+        dirJump = dirJumpEven;
+    } else {
+        dir = dirOdd;
+        dirJump = dirJumpOdd;
+    }
+    for (let i = 0; i < dir.length; i++) {
+        dy = dir[i][0] + y;
+        dx = dir[i][1] + x;
+        if (dy < NY && dx < NX && dy >= 0 && dx >= 0
+            && this.mas[dy][dx] === 0) {
+            return true;
+        }
+    }
+    for (let i = 0; i < dirJump.length; i++) {
+        dy = dirJump[i][0] + y;
+        dx = dirJump[i][1] + x;
+        if (dy < NY && dx < NX && dy >= 0 && dx >= 0
+            && this.mas[dy][dx] === 0) {
+            return true;
+        }
+    }
+}
+
+Judge.prototype.hasMoves = function (player) {
+    if (this.numMoves < 100) {
+        console.log("player "+player);
+        let hasBlank = false;
+        for (let y = 0; y < NY; y++) {
+            for (let x = 0; x < NX; x++) {
+                if (this.field.mas[y][x] === player && this.field.findMoves(y,x)) {
+                    return true;
+                } else if (this.field.mas[y][x] === 0) {
+                    hasBlank = true;
+                }
+            }
+        }
+        if (hasBlank) {
+            //@player hasn't moves
+            this.winner = 3 - player;
+            this.gameOver = true;
+            return false;
+        }
+    }
+    this.winner = this.whoWinner();
+    this.gameOver = true;
+    return false;
 };
 
+
+// Validate move
+Move.prototype.isValid = function(field){
+
+    if (field.mas[this.py][this.px] === this.player && field.mas[this.y][this.x] === 0) {
+        let dir, dirJump, dx, dy;
+        if ((this.px % 2) == 0) {
+            dir = dirEven;
+            dirJump = dirJumpEven;
+        } else {
+            dir = dirOdd;
+            dirJump = dirJumpOdd;
+        }
+        for (let i = 0; i < 6; i++) {
+            dy = dir[i][0] + this.py;
+            dx = dir[i][1] + this.px;
+            if (dy === this.y && dx === this.x) {
+                return true;
+            }
+        }
+        for (let i = 0; i < dirJump.length; i++) {
+            dy = dirJump[i][0] + this.py;
+            dx = dirJump[i][1] + this.px;
+            if (dy === this.y && dx === this.x) {
+                return true;
+            }
+        }
+    }
+    return false;
+};
 
 //Scan reply from bot
 Move.prototype.scan = function (field) {
@@ -209,9 +304,14 @@ Move.prototype.scan = function (field) {
     this.y = +mxy[0];
     this.x = +mxy[1];
     this.isJump = (Math.abs(this.px - this.x) === 2);
-    console.log(JSON.stringify(this));
-    judge.ansverPull = [];
-    field.judge.pullField(field, this);
+    if (this.isValid(field)) {
+        console.log(JSON.stringify(this));
+        judge.ansverPull = [];
+        field.judge.pullField(field, this);
+    } else {
+        judge.winner = 3 - this.player;
+        callback(this.field);
+    }
 };
 
 //pass to input buffer field  to push in pipe
@@ -244,7 +344,7 @@ Field.prototype.injectField = function (m) {
         dir = dirOdd;
     }
 
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < dir.length; i++) {
         dy = dir[i][0] + m.y;
         dx = dir[i][1] + m.x;
         if (dy < NY && dx < NX && dy >= 0 && dx >= 0
@@ -261,6 +361,19 @@ Field.prototype.injectField = function (m) {
         //     }
         // }
     }
+};
+
+Judge.prototype.whoWinner = function () {
+    let n =[0,0,0];
+    for (let y = 0; y < NY; y++) {
+        for (let x = 0; x < NX; x++) {
+            n[this.field.mas[y][x]]++;
+        }
+    }
+    if (n[1] > n[2]) return 1;
+    else if (n[1] < n[2]) return 2;
+
+    return 0;
 };
 
 Field.prototype.finish = function () {

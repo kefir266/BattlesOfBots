@@ -34,3 +34,11 @@ div.row-field {
     position: relative;
     transform: scale(1.2,1.2);
 }
+
+.winner {
+    color: red;
+}
+
+div.block-game {
+    display: inline;
+}
