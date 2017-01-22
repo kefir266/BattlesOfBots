@@ -11,15 +11,16 @@ var NY = 6;
 var NX = 7;
 
 var counter = 0;
-
+var kRecur = 1;
 type Dir struct {
 	y, x int
 }
 
-var dir, dirJump []Dir
+var dir, dirEven, dirOdd, dirJumpEven, dirJumpOdd, dirJump []Dir
 
 type Checker struct {
 	y, x int
+	n int
 }
 
 var moves *list.List
@@ -96,13 +97,17 @@ func (field *Field) scan() error {
 	field.bestMove.player = field.myPlayer
 
 	field.checkers = list.New()
+	var nBlank = 0
 	for y := 0; y < NY; y++ {
 		for x := 0; x < NX; x++ {
 			if field.mas[y][x] == field.myPlayer {
-				field.checkers.PushBack(&Checker{y, x})
+				field.checkers.PushBack(&Checker{y, x,0})
+			} else if field.mas[y][x] == 0 {
+				nBlank++
 			}
 		}
 	}
+	kRecur = field.checkers.Len() * nBlank;
 
 	return err
 }
@@ -141,14 +146,27 @@ func (field *Field) injectField(m *Move) {
 		for y = 0; y < NY; y++ {
 			for x = 0; x < NX; x ++ {
 				if (field.mas[y][x] == field.myPlayer) {
-					field.checkers.PushBack(&Checker{y, x})
+					field.checkers.PushBack(&Checker{y, x,0})
 				}
 			}
 		}
 	}
 }
 
+func (field *Field) calcOpenChecks() int {
+	var v *list.Element
+	var num = 0
+	for v = field.checkers.Front(); v != nil; v = v.Next() {
+		num += v.Value.(*Checker).n
+	}
+	//fmt.Print(num)
+	return num
+}
+
 func (field *Field) comparable() int {
+	//if ((field.recur % 2) != 0 ){
+	//	return 0;
+	//}
 	var my, rival int
 	for y := 0; y < NY; y++ {
 		for x := 0; x < NX; x++ {
@@ -164,8 +182,8 @@ func (field *Field) comparable() int {
 		}
 	}
 
-	fmt.Println(my - rival)
-	return (my - rival)*10
+	//fmt.Println(my - rival)
+	return (my - rival)*2 + field.calcOpenChecks()
 }
 
 func (field *Field) nextStep(m *Move) {
@@ -173,7 +191,7 @@ func (field *Field) nextStep(m *Move) {
 		m.cost = field.comparable() * 1000
 		return ;
 	}
-	if ( counter > 20000000 || field.recur > 1) {
+	if ( counter > 4000000 || (field.recur > 1 && field.nMoves < 46) || (field.recur > 2 )) {
 		m.cost = field.comparable()
 		return ;
 	}
@@ -187,7 +205,9 @@ func (field *Field) nextStep(m *Move) {
 
 	m.cost = field.comparable()
 	newField.calculateMoves()
-	m.cost = -newField.bestMove.cost * field.recur
+	if (m.cost > newField.bestMove.cost) {
+		m.cost = newField.bestMove.cost //* field.recur
+	}
 	fields.PushBack(newField)
 
 }
@@ -197,6 +217,11 @@ func (field *Field) findMoves(m *Move) int {
 
 	var nMov int = 0
 	//moves
+	if (m.px % 2 == 0) {
+		dir = dirEven[:]
+	} else {
+		dir = dirOdd[:]
+	}
 	for _,d := range dir {
 		dy = d.y + m.py
 		dx = d.x + m.px
@@ -212,8 +237,6 @@ func (field *Field) findMoves(m *Move) int {
 				field.maxCost = m.cost
 				field.newBestMove(m)
 			}
-			if field.recur == 0   {
-			}
 			if field.bestMove == nil {
 				field.newBestMove(m)
 			}
@@ -223,6 +246,11 @@ func (field *Field) findMoves(m *Move) int {
 	}
 
 	//jumps
+	if (m.px % 2 == 0) {
+		dirJump = dirJumpEven[:]
+	} else {
+		dirJump = dirJumpOdd[:]
+	}
 	for _,d := range dirJump {
 
 		dy = d.y + m.py
@@ -261,9 +289,11 @@ func (field *Field) calculateMoves() {
 	for v = field.checkers.Front(); v != nil; v = v.Next() {
 		m.px = v.Value.(*Checker).x
 		m.py = v.Value.(*Checker).y
-		nMov += field.findMoves(m)
+		v.Value.(*Checker).n = field.findMoves(m)
+		nMov += v.Value.(*Checker).n
 	}
 	if (nMov == 0 && field.nMoves < 100) {
+		field.newBestMove(m);
 		field.bestMove.cost = -100000;
 	}
 	moves.PushBack(m)
@@ -272,11 +302,16 @@ func (field *Field) calculateMoves() {
 func main() {
 
 	var field = Field{maxCost: -9000000, bestMove:&Move{}}
-	dir = []Dir{{-1, -1}, {-1, 0}, {-1, 1},
+	dirEven = []Dir{ {-1, -1}, {-1, 0},{-1, 1},
+		{0, -1}, {0, 1},
+		{1, 0} }
+	dirOdd = []Dir{ {-1, 0},
 		{0, -1}, {0, 1},
 		{1, -1}, {1, 0}, {1, 1}}
-	dirJump = []Dir{{-1, -2}, {-2, 0}, {-1, 2},
-		{1, -2}, {2, 0}, {1, 2}}
+	dirJumpEven = []Dir{{-2,-1},{-1, -2}, {-2, 0}, {-1, 2},{-2,1},
+		{1, -2}, {1,-1},{2, 0},{1,1} ,{1, 2}}
+	dirJumpOdd = []Dir{{-1,-1},{-1, -2}, {-2, 0}, {-1, 2},{-1,1},
+		{2, -1}, {2,-1},{2, 0},{2,1} ,{1, 2}}
 	moves = list.New()
 	fields = list.New()
 
@@ -287,4 +322,5 @@ func main() {
 	fmt.Println(field.bestMove.y, field.bestMove.x)
 
 	fmt.Println(field.bestMove.cost)
+	fmt.Println(counter)
 }

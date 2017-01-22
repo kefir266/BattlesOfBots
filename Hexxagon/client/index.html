@@ -10,9 +10,8 @@
 
     var socket = io();
 
-    function start() {
-        socket.emit('data', {reason: 'start'});
-        socket.on('field', function (data) {
+    function outputField(data) {
+        {
 
             var divField = '',
                 player = 0,
@@ -23,7 +22,7 @@
                     player = data.field[y][x];
                     switch (player) {
                         case 0: img = 'HEX-white.png';
-                        break;
+                            break;
                         case 1:
                             img = 'HEX-blue.png';
                             break;
@@ -39,12 +38,41 @@
                 divField += '</div>';
             }
             $("#field").html(divField);
-        });
+            $("#next-button").attr("disabled",false);
+            $("#prev-button").attr("disabled",false);
+        }
+    }
+
+
+    function next() {
+        console.log('NEXT client');
+        socket.emit('data', {reason: 'next'});
+        socket.on('field', outputField );
 
         socket.on('move', function () {
 
         });
+        $("#next-button").attr("disabled",true);
+        $("#prev-button").attr("disabled",true);
     };
+
+    function start() {
+        socket.emit('data', {reason: 'start'});
+        socket.on('field', outputField );
+
+        socket.on('move', function () {
+
+        });
+        $("#next-button").attr("disabled",false);
+    };
+
+    function run() {
+
+    }
+
+    function prev() {
+
+    }
 
 </script>
 </head>
@@ -52,6 +80,9 @@
 <h1>Hexxagon</h1>
 <div id="field"></div>
 <button onclick="start()">START</button>
+<button id="prev-button" onclick="prev()" disabled="true">&lt;PREV</button>
+<button id="run-button" onclick="run()" disabled="true">RUN</button>
+<button id="next-button" onclick="next()" disabled="true">NEXT&gt;</button>
 </body>
 
 </html>

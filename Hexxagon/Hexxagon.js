@@ -19,13 +19,13 @@
 //     console.log(input_stdin_array);
 //     //main();
 // });
-// var input_currentline = 0;
+// let input_currentline = 0;
 
 
 ///////////////////for the judgement system///////////////////
 process.stdin.resume();
 process.stdin.setEncoding("utf-8");
-var stdin_input = "";
+let stdin_input = "";
 //process.stdout.write('Test');
 
 process.stdin.on("data", function (input) {
@@ -40,17 +40,22 @@ process.stdin.on("end", function () {
 });
 ///////////////////////////////////////////////////////////////
 
-var input_stdin_array =[];
-var NY = 6;
-var NX = 7;
-var counter = 0;
-var dir = [[-1,-1],[-1,+0], [-1, +1],
-    [+0, -1], [+0, 1],
-    [+1, -1], [+1, +0], [+1, +1]];
-var dirJump = [[-1,-2],[-2,+0], [-1, 2],
-    [+1, -2], [-2, +0], [+1, 2]];
+let input_stdin_array = [];
+const NY = 6,
+    NX = 7;
+let counter = 0;
+const dirEven = [[-1, -1], [-1, 0], [-1, 1],
+        [0, -1], [0, 1],
+        [1, 0]],
+    dirOdd = [[-1, 0],
+        [0, -1], [0, 1],
+        [1, -1], [1, 0], [1, 1]],
+    dirJumpEven = [[-2, -1], [-1, -2], [-2, 0], [-1, 2], [-2, 1],
+        [1, -2], [1, -1], [2, 0], [1, 1], [1, 2]],
+    dirJumpOdd = [[-1, -1], [-1, -2], [-2, 0], [-1, 2], [-1, 1],
+        [2, -1], [2, -1], [2, 0], [2, 1], [1, 2]];
 
-var Moves = function(player){
+let Moves = function (player) {
     this.x = +0;
     this.y = +0;
     this.px = +0;
@@ -60,7 +65,7 @@ var Moves = function(player){
     this.player = player;
 };
 
-var Field = function () {
+let Field = function () {
     this.myPlayer = +0;
     this.mas = [];
     this.nMoves = +0;
@@ -72,31 +77,34 @@ var Field = function () {
 };
 
 
-Field.prototype.scan = function () {
+Field.prototype.scan = function (error) {
 
-    var mas = [];
-    for (y = 0 ; y < NY ; y++){
+    let mas = [];
+    for (let y = 0; y < NY; y++) {
+        if (! input_stdin_array[y]) {
+            error(input_stdin_array);
+        }
         mas[y] = input_stdin_array[y].split(' ');
     }
     this.nMoves = +input_stdin_array[6];
     this.myPlayer = +input_stdin_array[7];
-    for (y = 0 ; y < NY ; y++){
+    for (let y = 0; y < NY; y++) {
         this.mas[y] = [];
-        for (x = 0 ; x < NX ; x ++) {
+        for (let x = 0; x < NX; x++) {
             this.mas[y][x] = +mas[y][x];
             if (this.mas[y][x] === this.myPlayer) {
-                this.checkers.push( {y: y, x: x});
+                this.checkers.push({y: y, x: x});
             }
         }
     }
     this.bestMove = new Moves(this.myPlayer);
 };
 
-Field.prototype.clone = function(){
-    var newField = new Field();
-    for (y = 0 ; y < NY; y++){
+Field.prototype.clone = function () {
+    let newField = new Field();
+    for (let y = 0; y < NY; y++) {
         newField.mas[y] = [];
-        for (x = 0; x < NX ; x++) {
+        for (let x = 0; x < NX; x++) {
             newField.mas[y][x] = this.mas[y][x];
         }
     }
@@ -113,29 +121,35 @@ Field.prototype.clone = function(){
 };
 
 Field.prototype.injectField = function (m) {
-    for (i = 0 ; i < 8 ; i ++) {
+    let dir, dx, dy;
+    if ((m.px % 2) == 0) {
+        dir = dirEven;
+    } else {
+        dir = dirOdd;
+    }
+    for (let i = 0; i < 5; i++) {
         dy = dir[i][0] + m.y;
         dx = dir[i][1] + m.x;
-        if (dy < NY && dx < NX && dy >= 0 && dx >= 0 && this.mas[dy][dx] === this.myPlayer){ //it's new field
+        if (dy < NY && dx < NX && dy >= 0 && dx >= 0 && this.mas[dy][dx] === this.myPlayer) { //it's new field
             this.mas[dy][dx] = m.player;
         }
 
         //count checkers
-        for (y = 0 ; y < NY ; y++){
-            for (x = 0 ; x < NX ; x ++) {
+        for (let y = 0; y < NY; y++) {
+            for (let x = 0; x < NX; x++) {
                 if (this.mas[y][x] === this.myPlayer) {
-                    this.checkers.push( {y: y, x: x});
+                    this.checkers.push({y: y, x: x});
                 }
             }
         }
     }
 };
 
-Field.prototype.comparable = function() {
-    var my = 0,
+Field.prototype.comparable = function () {
+    let my = 0,
         rival = 0;
-    for (y = 0 ; y < NY ; y++) {
-        for (x = 0; x < NX; x++) {
+    for (let y = 0; y < NY; y++) {
+        for (let x = 0; x < NX; x++) {
             switch (this.mas[y][x]) {
                 case 0:
                     break;
@@ -150,19 +164,19 @@ Field.prototype.comparable = function() {
     return +(my - rival);
 };
 
-Field.prototype.nextStep = function(m){
+Field.prototype.nextStep = function (m) {
 
 
-    if (this.nMoves === 100){
+    if (this.nMoves === 100) {
         m.cost = this.comparable() * 1000;
         return 0;
     }
-    if ( counter > 2000000 || this.recur > 1) {
+    if (counter > 2000000 || this.recur > 1) {
         m.cost = this.comparable();
         return 0;
     }
 
-    var newField = this.clone();
+    let newField = this.clone();
     if (m.isJump) {
         newField.mas[m.py][m.px] = 0;
     }
@@ -176,15 +190,24 @@ Field.prototype.nextStep = function(m){
 
 };
 
-Field.prototype.findMoves = function(m){
-    var dx, dy;
+Field.prototype.findMoves = function (m) {
+    let dx, dy;
+    let dir, dirJump;
 
-    var nMov = 0;
+    if ((m.px % 2) == 0) {
+        dir = dirEven;
+        dirJump = dirJumpEven;
+    } else {
+        dir = dirOdd;
+        dirJump = dirJumpOdd;
+    }
+
+    let nMov = 0;
     //moves
-    for (i = 0; i < 7 ; i++){
+    for (let i = 0; i < 6; i++) {
         dy = dir[i][0] + m.py;
         dx = dir[i][1] + m.px;
-        if ((dy < NY) && (dx < NX) && (dy >= 0) && (dx >= 0) && (this.mas[dy][dx] === 0)){
+        if ((dy < NY) && (dx < NX) && (dy >= 0) && (dx >= 0) && (this.mas[dy][dx] === 0)) {
 
             m.x = dx;
             m.y = dy;
@@ -205,10 +228,10 @@ Field.prototype.findMoves = function(m){
     }
 
     //jumps
-    for (i = 0; i < 5 ; i++){
+    for (let i = 0; i < 8; i++) {
         dy = dirJump[i][0] + m.py;
         dx = dirJump[i][1] + m.px;
-        if (dy < NY && dx < NX && dy >= 0 && dx >= 0 && this.mas[dy][dx] === 0){
+        if (dy < NY && dx < NX && dy >= 0 && dx >= 0 && this.mas[dy][dx] === 0) {
 
             m.x = dx;
             m.y = dy;
@@ -233,26 +256,29 @@ Field.prototype.findMoves = function(m){
     return nMov;
 };
 
-Field.prototype.calculateMoves = function(){
-    var field = this;
-    var nMov = 0;
-    var m = new Moves(this.myPlayer);
+Field.prototype.calculateMoves = function () {
+    let field = this;
+    let nMov = 0;
+    let m = new Moves(this.myPlayer);
 
-    this.checkers.forEach(function(v){
+    this.checkers.forEach(function (v) {
         m.px = v.x;
         m.py = v.y;
         nMov += field.findMoves(m);
     });
-    if (nMov === 0 && this.nMoves < 100){
+    if (nMov === 0 && this.nMoves < 100) {
         this.bestMove.cost = -100000;
     }
 };
 
+function errorScanField(input) {
+    console.log(input);
+}
 
 function main() {
     //console.log('START');
-    var field = new Field();
-    field.scan();
+    let field = new Field();
+    field.scan(errorScanField);
     field.calculateMoves();
 
     process.stdout.write(field.bestMove.py + ' ' + field.bestMove.px + '\n');
